@@ -1,0 +1,12 @@
+fileFormatVersion: 2
+guid: 3b84939d4ba8bb54f870dfed00e1c468
+timeCreated: 1515438219
+licenseType: Free
+ShaderImporter:
+  externalObjects: {}
+  defaultTextures:
+  - _BrushedMetalNormal: {fileID: 2800000, guid: 302951faffe230848aa0d3df7bb70faa,
+      type: 3}
+  userData: 
+  assetBundleName: 
+  assetBundleVariant: 
