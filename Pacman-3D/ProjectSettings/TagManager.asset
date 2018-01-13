@@ -3,7 +3,8 @@
 --- !u!78 &1
 TagManager:
   serializedVersion: 2
-  tags: []
+  tags:
+  - Ghost
   layers:
   - Default
   - TransparentFX
@@ -15,15 +16,15 @@ TagManager:
   - 
   - Level
   - 
+  - Pacman-Level
+  - Pacman-Enemies
+  - Pacman-Pickups
   - 
+  - Enemy-Level
+  - Enemy-Pacman
+  - Enemy-Pickups
   - 
-  - 
-  - 
-  - 
-  - 
-  - 
-  - 
-  - 
+  - Pickup
   - 
   - 
   - 

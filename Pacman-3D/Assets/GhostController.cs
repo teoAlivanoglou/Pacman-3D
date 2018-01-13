@@ -5,7 +5,6 @@ using UnityEngine;
 
 public class GhostController : MonoBehaviour
 {
-
     public Transform target;
     public PacmanController pacman;
     public LayerMask obstacles;
@@ -17,12 +16,51 @@ public class GhostController : MonoBehaviour
     public bool debug = false;
 
     private Rigidbody rb;
+    private Queue<Action> actionQueue = new Queue<Action>();
+
 
     private void Awake()
     {
         rb = GetComponent<Rigidbody>();
         if (ai)
             nextDirection = Vector3.left;
+    }
+
+    private void Start()
+    {
+        actionQueue.Enqueue(() => ChangeState(7, GhostState.Scatter));
+        actionQueue.Enqueue(() => ChangeState(20, GhostState.Chase));
+
+        actionQueue.Enqueue(() => ChangeState(7, GhostState.Scatter));
+        actionQueue.Enqueue(() => ChangeState(20, GhostState.Chase));
+
+        actionQueue.Enqueue(() => ChangeState(5, GhostState.Scatter));
+        actionQueue.Enqueue(() => ChangeState(20, GhostState.Chase));
+
+        actionQueue.Enqueue(() => ChangeState(5, GhostState.Scatter));
+        actionQueue.Enqueue(() => ChangeState(1, GhostState.Chase));
+
+
+        //actionQueue.Enqueue(() => ChangeState(1, GhostState.Scatter));
+        //actionQueue.Enqueue(() => ChangeState(2, GhostState.Chase));
+
+        //actionQueue.Enqueue(() => ChangeState(3, GhostState.Scatter));
+        //actionQueue.Enqueue(() => ChangeState(4, GhostState.Chase));
+
+        //actionQueue.Enqueue(() => ChangeState(5, GhostState.Scatter));
+        //actionQueue.Enqueue(() => ChangeState(6, GhostState.Chase));
+
+        //actionQueue.Enqueue(() => ChangeState(7, GhostState.Scatter));
+        //actionQueue.Enqueue(() => ChangeState(8, GhostState.Chase));
+    }
+
+    private float timer;
+
+    private void ChangeState(float time, GhostState newState)
+    {
+        timer = time;
+        state = newState;
+        FlipDirection();
     }
 
     private Vector3 direction;// = Vector3.forward;
@@ -40,10 +78,22 @@ public class GhostController : MonoBehaviour
                 direction = nextDirection;
 
             RotateModel();
+            TimeGhostState();
         }
         else
         {
             rb.isKinematic = true;
+        }
+    }
+
+    void TimeGhostState()
+    {
+        if (actionQueue.Count > 0 && state != GhostState.Frightened)
+        {
+            if (timer > 0)
+                timer -= Time.deltaTime;
+            else
+                actionQueue.Dequeue()();
         }
     }
 
@@ -54,11 +104,14 @@ public class GhostController : MonoBehaviour
             rb.velocity = direction * force;
     }
 
-    public AINode LastNode { get; protected set; }
+    public AINode LastNode;// { get; protected set; }
 
     public void NodeHit(AINode node)
     {
         LastNode = node;
+        if (!ai)
+            return;
+
         if (node != null)
         {
             Vector3[] allowedDirs = GetAllowedDirections();
@@ -80,7 +133,13 @@ public class GhostController : MonoBehaviour
 
             nextDirection = allowedDirs[minIndex];
             transform.position = node.transform.position;
+            direction = nextDirection;
         }
+    }
+
+    public void FlipDirection()
+    {
+        direction = nextDirection = -direction;
     }
 
     private Vector3[] GetAllowedDirections()
@@ -92,7 +151,7 @@ public class GhostController : MonoBehaviour
         //Debug.DrawRay(transform.position, Vector3.back * rayCastDistance, Color.red, 5f);
         //Debug.DrawRay(transform.position, Vector3.right * rayCastDistance, Color.red, 5f);
 
-        if (direction != Vector3.back && !Physics.Raycast(transform.position, Vector3.forward, rayCastDistance, obstacles))// && !LastNode.isSpecialNode)
+        if (direction != Vector3.back && !Physics.Raycast(transform.position, Vector3.forward, rayCastDistance, obstacles) && !LastNode.isSpecialNode)
             list.Add(Vector3.forward);
         if (direction != Vector3.right && !Physics.Raycast(transform.position, Vector3.left, rayCastDistance, obstacles))
             list.Add(Vector3.left);
@@ -121,7 +180,6 @@ public class GhostController : MonoBehaviour
         if (!Physics.Raycast(left, checkDir, rayCastDistance, obstacles) &&
             !Physics.Raycast(right, checkDir, rayCastDistance, obstacles))
         {
-
             return true;
         }
         else return false;

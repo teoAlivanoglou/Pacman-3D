@@ -21,7 +21,7 @@ GameObject:
   - component: {fileID: 4120945176556322}
   - component: {fileID: 33088807734895284}
   - component: {fileID: 23417262482298134}
-  m_Layer: 9
+  m_Layer: 18
   m_Name: Sphere
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -38,7 +38,7 @@ GameObject:
   - component: {fileID: 4304156881412218}
   - component: {fileID: 114040114491754714}
   - component: {fileID: 135985280244092482}
-  m_Layer: 9
+  m_Layer: 18
   m_Name: Pacdot
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -65,7 +65,7 @@ Transform:
   m_PrefabInternal: {fileID: 100100000}
   m_GameObject: {fileID: 1755634985991632}
   m_LocalRotation: {x: -0, y: -0, z: -0, w: 1}
-  m_LocalPosition: {x: -8.303574, y: 0, z: -8.857138}
+  m_LocalPosition: {x: 0, y: 0, z: 0}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_Children:
   - {fileID: 4120945176556322}

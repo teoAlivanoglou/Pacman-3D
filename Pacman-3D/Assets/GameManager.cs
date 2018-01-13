@@ -3,7 +3,7 @@ using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
 
-public class TargetManager : MonoBehaviour {
+public class GameManager : MonoBehaviour {
 
     public PacmanController pacman;
 
@@ -15,11 +15,8 @@ public class TargetManager : MonoBehaviour {
     public Transform pinkyTarget;
     public Transform inkyTarget;
     
-    void Start () {
-		
-	}
-	
-	void Update ()
+
+    void Update ()
     {
         BlinkyTargetUpdate();
         PinkyTargetUpdate();
