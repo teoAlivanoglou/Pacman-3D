@@ -1,6 +1,5 @@
 ﻿using System.Collections;
 using System.Collections.Generic;
-using UnityEditor;
 using UnityEngine;
 
 public class PlacePickups : MonoBehaviour
@@ -49,7 +48,11 @@ public class PlacePickups : MonoBehaviour
 
         foreach (Vector3 position in SavedPositions)
         {
-            GameObject go = (GameObject)PrefabUtility.InstantiatePrefab(pickup);
+#if UNITY_EDITOR
+            GameObject go = (GameObject)UnityEditor.PrefabUtility.InstantiatePrefab(pickup);
+#else
+            GameObject go = Instantiate(pickup);
+#endif
             go.transform.position = position;
             go.transform.parent = transform;
             //Instantiate(pickup, position, Quaternion.identity, transform);
