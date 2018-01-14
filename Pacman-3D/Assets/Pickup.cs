@@ -13,6 +13,7 @@ public class Pickup : MonoBehaviour {
 
         if (pacman != null)
         {
+            GameManager.Instance.pelletsLeft--;
             pacman.Score(score);
             Destroy(gameObject);
         }

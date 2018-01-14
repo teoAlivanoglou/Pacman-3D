@@ -6,7 +6,7 @@ public class PacmanController : MonoBehaviour
 {
     public LayerMask obstacles;
 
-    public float force = 1f;
+    public float speed = 1f;
     public bool debug = false;
 
     public bool Dead { get; protected set; }
@@ -41,7 +41,7 @@ public class PacmanController : MonoBehaviour
     private void FixedUpdate()
     {
         if (CanMoveForwardOrBackward(direction))
-            rb.velocity = direction * force;
+            rb.velocity = direction * speed;
     }
 
     private void RotateModel()

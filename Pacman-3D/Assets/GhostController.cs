@@ -10,14 +10,15 @@ public class GhostController : MonoBehaviour
     public LayerMask obstacles;
     public GhostState state;
 
-    public float force = 1f;
+    //public float force = 1f;
+    public float speed;
 
     public bool ai = true;
     public bool debug = false;
 
+
     private Rigidbody rb;
     private Queue<Action> actionQueue = new Queue<Action>();
-
 
     private void Awake()
     {
@@ -101,7 +102,7 @@ public class GhostController : MonoBehaviour
     {
         //if (!pacman.Dead)
         if (CanMoveForwardOrBackward(direction))
-            rb.velocity = direction * force;
+            rb.velocity = direction * speed;
     }
 
     public AINode LastNode;// { get; protected set; }
