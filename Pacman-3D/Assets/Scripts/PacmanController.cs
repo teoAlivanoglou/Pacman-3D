@@ -32,10 +32,6 @@ public class PacmanController : MonoBehaviour
 
             RotateModel();
         }
-        else
-        {
-            rb.isKinematic = true;
-        }
     }
 
     private void FixedUpdate()
@@ -112,6 +108,15 @@ public class PacmanController : MonoBehaviour
         if (CanRegisterNextDir(wantedNextDir))
             nextDirection = wantedNextDir;
     }
+
+    public void Die ()
+    {
+        Dead = true;
+        rb.isKinematic = true;
+        //Debug.Log("My name's " + transform.name + " and I'm dead af.");
+        GameManager.Instance.PlayAudio(GameManager.Instance.audioPacmanEaten, AudioPlayMode.once);
+    }
+
 
     void Dbg(string s)
     {

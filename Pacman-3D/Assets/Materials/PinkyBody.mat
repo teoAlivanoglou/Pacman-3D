@@ -55,7 +55,7 @@ Material:
     - _MKEditorShowDetailBehavior: 0
     - _MKEditorShowDissolveBehavior: 0
     - _MKEditorShowLightBehavior: 1
-    - _MKEditorShowMainBehavior: 0
+    - _MKEditorShowMainBehavior: 1
     - _MKEditorShowOutlineBehavior: 1
     - _MKEditorShowReflectionBehavior: 0
     - _MKEditorShowRenderBehavior: 0
@@ -76,7 +76,7 @@ Material:
     - __dirty: 0
     m_Colors:
     - _ASEOutlineColor: {r: 0, g: 0, b: 0, a: 0}
-    - _Color: {r: 0.9391481, g: 0.5588235, b: 1, a: 0}
+    - _Color: {r: 0.99264705, g: 0.58391005, b: 0.87989193, a: 1}
     - _Color0: {r: 1, g: 1, b: 1, a: 0}
     - _Color1: {r: 0, g: 1, b: 0.8758622, a: 0}
     - _EmissionColor: {r: 0, g: 0, b: 0, a: 1}

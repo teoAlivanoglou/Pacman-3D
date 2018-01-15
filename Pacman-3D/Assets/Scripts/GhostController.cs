@@ -29,6 +29,11 @@ public class GhostController : MonoBehaviour
 
     private void Start()
     {
+        QueueActions();
+    }
+
+    public void QueueActions()
+    {
         actionQueue.Enqueue(() => ChangeState(7, GhostState.Scatter));
         actionQueue.Enqueue(() => ChangeState(20, GhostState.Chase));
 
@@ -40,19 +45,6 @@ public class GhostController : MonoBehaviour
 
         actionQueue.Enqueue(() => ChangeState(5, GhostState.Scatter));
         actionQueue.Enqueue(() => ChangeState(1, GhostState.Chase));
-
-
-        //actionQueue.Enqueue(() => ChangeState(1, GhostState.Scatter));
-        //actionQueue.Enqueue(() => ChangeState(2, GhostState.Chase));
-
-        //actionQueue.Enqueue(() => ChangeState(3, GhostState.Scatter));
-        //actionQueue.Enqueue(() => ChangeState(4, GhostState.Chase));
-
-        //actionQueue.Enqueue(() => ChangeState(5, GhostState.Scatter));
-        //actionQueue.Enqueue(() => ChangeState(6, GhostState.Chase));
-
-        //actionQueue.Enqueue(() => ChangeState(7, GhostState.Scatter));
-        //actionQueue.Enqueue(() => ChangeState(8, GhostState.Chase));
     }
 
     private float timer;
@@ -61,7 +53,8 @@ public class GhostController : MonoBehaviour
     {
         timer = time;
         state = newState;
-        FlipDirection();
+        if (ai)
+            FlipDirection();
     }
 
     private Vector3 direction;// = Vector3.forward;
@@ -80,6 +73,11 @@ public class GhostController : MonoBehaviour
 
             RotateModel();
             TimeGhostState();
+
+            if (Input.GetKeyDown(KeyCode.Space))
+                if (ai && state != GhostState.Frightened && state != GhostState.Dead)
+                    SetFrightened(6);
+
         }
         else
         {
@@ -115,12 +113,12 @@ public class GhostController : MonoBehaviour
 
         if (node != null)
         {
-            Vector3[] allowedDirs = GetAllowedDirections();
+            List<Vector3> allowedDirs = node.GetAllowedDirs(state, direction);// GetAllowedDirections();
 
             int minIndex = -1;
             float minDistance = float.PositiveInfinity;
 
-            for (int i = 0; i < allowedDirs.Length; i++)
+            for (int i = 0; i < allowedDirs.Count; i++)
             {
                 float currentDistance = Vector3.Distance(
                     transform.position + allowedDirs[i], target.position);
@@ -131,7 +129,7 @@ public class GhostController : MonoBehaviour
                     minIndex = i;
                 }
             }
-
+            //Debug.Log("best distance = " + allowedDirs[minIndex]);
             nextDirection = allowedDirs[minIndex];
             transform.position = node.transform.position;
             direction = nextDirection;
@@ -143,26 +141,6 @@ public class GhostController : MonoBehaviour
         direction = nextDirection = -direction;
     }
 
-    private Vector3[] GetAllowedDirections()
-    {
-        List<Vector3> list = new List<Vector3>();
-
-        //Debug.DrawRay(transform.position, Vector3.forward * rayCastDistance, Color.red, 5f);
-        //Debug.DrawRay(transform.position, Vector3.left * rayCastDistance, Color.red, 5f);
-        //Debug.DrawRay(transform.position, Vector3.back * rayCastDistance, Color.red, 5f);
-        //Debug.DrawRay(transform.position, Vector3.right * rayCastDistance, Color.red, 5f);
-
-        if (direction != Vector3.back && !Physics.Raycast(transform.position, Vector3.forward, rayCastDistance, obstacles) && !LastNode.isSpecialNode)
-            list.Add(Vector3.forward);
-        if (direction != Vector3.right && !Physics.Raycast(transform.position, Vector3.left, rayCastDistance, obstacles))
-            list.Add(Vector3.left);
-        if (direction != Vector3.forward && !Physics.Raycast(transform.position, Vector3.back, rayCastDistance, obstacles))
-            list.Add(Vector3.back);
-        if (direction != Vector3.left && !Physics.Raycast(transform.position, Vector3.right, rayCastDistance, obstacles))
-            list.Add(Vector3.right);
-
-        return list.ToArray();
-    }
 
     private void RotateModel()
     {
@@ -218,7 +196,6 @@ public class GhostController : MonoBehaviour
         }
     }
 
-
     private void HandleInput()
     {
         // temporary direction, to check input validity
@@ -239,6 +216,52 @@ public class GhostController : MonoBehaviour
             nextDirection = wantedNextDir;
     }
 
+    public void Die()
+    {
+        GameManager.Instance.PlayAudio(GameManager.Instance.audioGhostEaten, AudioPlayMode.mixed);
+        state = GhostState.Dead;
+        GetComponentInChildren<BodyMesh>().Disable();
+        actionQueue.Clear();
+        //StopCoroutine("EndFrightened");
+        StopAllCoroutines();
+    }
+
+    public void Resurect()
+    {
+        GetComponentInChildren<BodyMesh>().ResetColor();
+        state = GhostState.Scatter;
+        LastNode = null;
+        QueueActions();
+        GetComponentInChildren<BodyMesh>().Enable();
+        direction = nextDirection = Vector3.forward;
+    }
+
+    private GhostState lastState;
+
+    public void SetFrightened(int seconds)
+    {
+        lastState = state;
+        state = GhostState.Frightened;
+        GetComponentInChildren<BodyMesh>().SetColor(Color.blue);
+        StartCoroutine(EndFrightened(seconds));
+    }
+    
+    IEnumerator EndFrightened(int time)
+    {
+        while (state == GhostState.Frightened)
+        {
+            yield return new WaitForSeconds(time);
+            state = lastState;
+            GetComponentInChildren<BodyMesh>().ResetColor();
+        }
+    }
+
+    public void Score()
+    {
+
+    }
+
+
     void Dbg(string s)
     {
         if (debug)
@@ -250,5 +273,6 @@ public enum GhostState
 {
     Scatter,
     Chase,
-    Frightened
+    Frightened,
+    Dead
 }

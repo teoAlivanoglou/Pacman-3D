@@ -19,6 +19,7 @@ public class GameManager : MonoBehaviour
     public Transform pinkyTarget;
     public Transform inkyTarget;
     public Transform clydeTarget;
+    public float targetDistanceThresshold = 0.1f;
 
     [Header("GameplayAdjusters")]
     [Range(1, 20)]
@@ -34,9 +35,21 @@ public class GameManager : MonoBehaviour
 
     [Header("Sound")]
     public AudioSource audioSource;
-    public AudioClip ambient;
-    public AudioClip wakka;
-    public AudioClip death;
+    public AudioClip audioAmbient;
+    public AudioClip audioWakka;
+    public AudioClip audioPacmanEaten;
+    public AudioClip audioGhostEaten;
+
+
+    private Vector3 blinkyScatterPos;
+    private Vector3 pinkyScatterPos;
+    private Vector3 inkyScatterPos;
+    private Vector3 clydeScatterPos;
+
+    private Vector3 blinkyResetPos;
+    private Vector3 pinkyResetPos;
+    private Vector3 inkyResetPos;
+    private Vector3 clydeResetPos;
 
 
     private static GameManager _instance;
@@ -54,6 +67,18 @@ public class GameManager : MonoBehaviour
     private void Awake()
     {
         pelletsLeft = GameObject.FindGameObjectWithTag("Pickups").transform.childCount;
+
+        blinkyScatterPos = new Vector3(11.5f, 0, 18f);
+        blinkyResetPos = new Vector3(0, 0, 1);
+
+        pinkyScatterPos  = new Vector3(-11.5f, 0, 18f);
+        pinkyResetPos = new Vector3(0, 0, 1);
+
+        inkyScatterPos = new Vector3(14f, 0, -18f);
+        inkyResetPos = new Vector3(-2, 0, 1);
+
+        clydeScatterPos = new Vector3(-14f, 0, -18f);
+        clydeResetPos = new Vector3(2, 0, 1);
     }
 
     /*
@@ -68,7 +93,7 @@ public class GameManager : MonoBehaviour
 
         blinky.speed = pinky.speed = inky.speed = clyde.speed = baseGhostSpeed;
 
-        PlayAudio(ambient, AudioPlayMode.continuous);
+        PlayAudio(audioAmbient, AudioPlayMode.continuous);
     }
 
     private void SetupBasedOnLevel()
@@ -111,30 +136,97 @@ public class GameManager : MonoBehaviour
         ClydeTargetUpdate();
 
         BlinkyUpdate();
+        PinkyUpdate();
+        InkyUpdate();
+        ClydeUpdate();
     }
 
     private void BlinkyUpdate()
     {
-        if (pelletsLeft < aggressivePelletsFaster)
-            blinky.speed = aggressiveSpeedFaster;
-        else if (pelletsLeft < aggressivePellets)
-            blinky.speed = aggressiveSpeed;
+        if (blinky.state == GhostState.Dead)
+        {
+            blinky.speed = baseGhostSpeed * 2;
+            if (Vector3.Distance(blinky.transform.position, blinkyResetPos) < targetDistanceThresshold)
+            {
+                blinky.Resurect();
+            }
+        }
+        else
+        {
+            blinky.speed = baseGhostSpeed;
+            if (pelletsLeft < aggressivePelletsFaster)
+                blinky.speed = aggressiveSpeedFaster;
+            else if (pelletsLeft < aggressivePellets)
+                blinky.speed = aggressiveSpeed;
+        }
+    }
+
+    private void PinkyUpdate()
+    {
+        if (pinky.state == GhostState.Dead)
+        {
+            pinky.speed = baseGhostSpeed * 2;
+            if (Vector3.Distance(pinky.transform.position, pinkyResetPos) < targetDistanceThresshold)
+            {
+                pinky.Resurect();
+            }
+        }
+        else
+        {
+            pinky.speed = baseGhostSpeed;
+        }
+    }
+
+    private void InkyUpdate()
+    {
+        if (inky.state == GhostState.Dead)
+        {
+            inky.speed = baseGhostSpeed * 2;
+            if (Vector3.Distance(inky.transform.position, inkyResetPos) < targetDistanceThresshold)
+            {
+                inky.Resurect();
+            }
+        }
+        else
+        {
+            inky.speed = baseGhostSpeed;
+        }
+    }
+
+    private void ClydeUpdate()
+    {
+        if (clyde.state == GhostState.Dead)
+        {
+            clyde.speed = baseGhostSpeed * 2;
+            if (Vector3.Distance(clyde.transform.position, clydeResetPos) < targetDistanceThresshold)
+            {
+                clyde.Resurect();
+            }
+        }
+        else
+        {
+            clyde.speed = baseGhostSpeed;
+        }
     }
 
     private void BlinkyTargetUpdate()
     {
         if (blinky.state == GhostState.Chase)
             blinkyTarget.position = pacman.transform.position;
-        else
-            blinkyTarget.position = new Vector3(11.5f, 0, 18f);
+        else if (blinky.state == GhostState.Scatter)
+            blinkyTarget.position = blinkyScatterPos;
+        else if (blinky.state == GhostState.Dead)
+            blinkyTarget.position = blinkyResetPos;
     }
 
     private void PinkyTargetUpdate()
     {
         if (pinky.state == GhostState.Chase)
             pinkyTarget.position = pacman.transform.position + pacman.transform.forward * 4f;
-        else
-            pinkyTarget.position = new Vector3(-11.5f, 0, 18f);
+        else if (pinky.state == GhostState.Scatter)
+            pinkyTarget.position = pinkyScatterPos;
+        else if (pinky.state == GhostState.Dead)
+            pinkyTarget.position = pinkyResetPos;
     }
 
     private void InkyTargetUpdate()
@@ -145,16 +237,20 @@ public class GameManager : MonoBehaviour
 
             inkyTarget.position = 2 * pivot - blinky.transform.position;
         }
-        else
-            inkyTarget.position = new Vector3(14f, 0, -18f);
+        else if (inky.state == GhostState.Scatter)
+            inkyTarget.position = inkyScatterPos;
+        else if (inky.state == GhostState.Dead)
+            inkyTarget.position = inkyResetPos;
     }
 
     private void ClydeTargetUpdate()
     {
         if (clyde.state == GhostState.Chase && Vector3.Distance(pacman.transform.position, clyde.transform.position) > 8)
             clydeTarget.position = pacman.transform.position;
-        else
-            clydeTarget.position = new Vector3(-14f, 0, -18f);
+        else if (clyde.state == GhostState.Scatter)
+            clydeTarget.position = clydeScatterPos;
+        else if (clyde.state == GhostState.Dead)
+            clydeTarget.position = clydeResetPos;
     }
 
     public void PlayAudio(AudioClip clip, AudioPlayMode playMode)
