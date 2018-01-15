@@ -15,6 +15,7 @@ public class Pickup : MonoBehaviour {
         {
             GameManager.Instance.pelletsLeft--;
             pacman.Score(score);
+            GameManager.Instance.PlayAudio(GameManager.Instance.wakka, AudioPlayMode.mixed);
             Destroy(gameObject);
         }
     }

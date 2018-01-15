@@ -3,7 +3,8 @@ using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
 
-public class GameManager : MonoBehaviour {
+public class GameManager : MonoBehaviour
+{
 
     [Header("Characters")]
     public PacmanController pacman;
@@ -30,6 +31,13 @@ public class GameManager : MonoBehaviour {
     private float aggressiveSpeedFaster;
     private int aggressivePellets;
     private int aggressivePelletsFaster;
+
+    [Header("Sound")]
+    public AudioSource audioSource;
+    public AudioClip ambient;
+    public AudioClip wakka;
+    public AudioClip death;
+
 
     private static GameManager _instance;
     public static GameManager Instance {
@@ -59,6 +67,8 @@ public class GameManager : MonoBehaviour {
         SetupBasedOnLevel();
 
         blinky.speed = pinky.speed = inky.speed = clyde.speed = baseGhostSpeed;
+
+        PlayAudio(ambient, AudioPlayMode.continuous);
     }
 
     private void SetupBasedOnLevel()
@@ -93,7 +103,7 @@ public class GameManager : MonoBehaviour {
         this.aggressivePelletsFaster = aggressivePellets / 2;
     }
 
-    void Update ()
+    void Update()
     {
         BlinkyTargetUpdate();
         PinkyTargetUpdate();
@@ -147,4 +157,30 @@ public class GameManager : MonoBehaviour {
             clydeTarget.position = new Vector3(-14f, 0, -18f);
     }
 
+    public void PlayAudio(AudioClip clip, AudioPlayMode playMode)
+    {
+        if (playMode == AudioPlayMode.once)
+        {
+            audioSource.clip = clip;
+            audioSource.loop = false;
+            audioSource.Play();
+        }
+        else if (playMode == AudioPlayMode.continuous)
+        {
+            audioSource.clip = clip;
+            audioSource.loop = true;
+            audioSource.Play();
+        }
+        else if (playMode == AudioPlayMode.mixed)
+        {
+            audioSource.PlayOneShot(clip);
+        }
+    }
+}
+
+public enum AudioPlayMode
+{
+    once,
+    continuous,
+    mixed
 }
