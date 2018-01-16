@@ -5,7 +5,7 @@ using UnityEngine;
 
 public class AINode : MonoBehaviour
 {
-
+    public PacmanController pacman;
     public GhostController[] ghosts;
     public float distanceThresshold;
 
@@ -20,6 +20,7 @@ public class AINode : MonoBehaviour
     private void Awake()
     {
         ghosts = GameObject.FindGameObjectsWithTag("Ghost").Select(x => x.GetComponent<GhostController>()).ToArray();
+        pacman = GameObject.FindGameObjectWithTag("Pacman").GetComponent<PacmanController>();
     }
 
     public List<Vector3> GetAllowedDirs(GhostState state, Vector3 direction)
@@ -31,7 +32,7 @@ public class AINode : MonoBehaviour
         if (right && (Vector3.right != -direction)) res.Add(Vector3.right);
 
         if (isHouseNode)
-            if (state != GhostState.Dead)
+            if (state != GhostState.Dead && !pacman.Dead)
                 res.Remove(Vector3.back);
 
         return res;

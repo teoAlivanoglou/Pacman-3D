@@ -403,7 +403,7 @@ BoxCollider:
   m_IsTrigger: 0
   m_Enabled: 1
   serializedVersion: 2
-  m_Size: {x: 1.8, y: 2, z: 1.8}
+  m_Size: {x: 1.8, y: 2, z: 1.9}
   m_Center: {x: 0, y: 1, z: 0}
 --- !u!95 &95017888600188958
 Animator:
@@ -452,10 +452,14 @@ MonoBehaviour:
   state: 1
   speed: 0
   ai: 1
+  active: 0
   debug: 0
+  randomMovement: 0
+  OscillationDone: 0
+  OscillationShouldFinish: 0
   LastNode: {fileID: 0}
   rayCastDistance: 1.5
-  rayCastOrigin: 0.95
+  rayCastOrigin: 0.94
 --- !u!135 &135152755336765734
 SphereCollider:
   m_ObjectHideFlags: 1
@@ -463,10 +467,10 @@ SphereCollider:
   m_PrefabInternal: {fileID: 100100000}
   m_GameObject: {fileID: 1816584103910202}
   m_Material: {fileID: 0}
-  m_IsTrigger: 0
+  m_IsTrigger: 1
   m_Enabled: 1
   serializedVersion: 2
-  m_Radius: 0.9
+  m_Radius: 0.5
   m_Center: {x: 0, y: 1, z: 0}
 --- !u!135 &135749778119128626
 SphereCollider:

@@ -2,6 +2,7 @@
 using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
+using TMPro;
 
 public class GameManager : MonoBehaviour
 {
@@ -27,12 +28,24 @@ public class GameManager : MonoBehaviour
     public int pacmanScore = 0;
     public int pelletsLeft;
 
+    [Header("UI")]
+    public TextMeshProUGUI player1Text;
+    public TextMeshProUGUI player2Text;
+
+    private const string hrt = "<sprite=0 tint=1>";
+    private const string txtDefaultP1 = "Player 1:<color=#DDD300>";
+    private const string txtDefaultP2 = "Player 2:<color=";
+    private const string txtBlinky = "#FD4425>";
+    private const string txtPinky = "#F0A6EE>";
+    private const string txtInky = "#93C9F4>";
+    private const string txtClyde = "#F2C06D>";
+
     private float baseGhostSpeed;
     private float aggressiveSpeed;
     private float aggressiveSpeedFaster;
     private int aggressivePellets;
     private int aggressivePelletsFaster;
-    
+
     private Vector3 blinkyScatterPos;
     private Vector3 pinkyScatterPos;
     private Vector3 inkyScatterPos;
@@ -43,8 +56,10 @@ public class GameManager : MonoBehaviour
     private Vector3 inkyResetPos;
     private Vector3 clydeResetPos;
 
-    private Queue<GhostController> ghostQueue;
+    [Header("Debug")]
+    public bool play = false;
 
+    private Queue<GhostController> ghostQueue;
 
     private static GameManager _instance;
     public static GameManager Instance {
@@ -86,18 +101,41 @@ public class GameManager : MonoBehaviour
      * lvl 5+  = 95% pacman speed
      */
 
+    GhostController[] allGhosts;
+
     private void Start()
     {
+        AddLife(1, 3);
+        AddLife(2, 3);
+
         SetupBasedOnLevel();
 
+        allGhosts = new GhostController[] { blinky, pinky, inky, clyde };
+
         blinky.speed = pinky.speed = inky.speed = clyde.speed = baseGhostSpeed;
+        ResetBoard();
+    }
 
-        blinky.WakeUp();
-        pinky.WakeUp();
-        inky.WakeUp();
-        clyde.WakeUp();
+    private IEnumerator StartGame(float time)
+    {
+        while (!play)
+        {
+            yield return new WaitForSeconds(time);
 
-        pinky.Init();
+            blinky.WakeUp();
+            pinky.WakeUp();
+            inky.WakeUp();
+            clyde.WakeUp();
+
+            pinky.Init();
+
+            play = true;
+            pacman.play = true;
+            blinky.play = true;
+            pinky.play = true;
+            inky.play = true;
+            clyde.play = true;
+        }
     }
 
     private void SetupBasedOnLevel()
@@ -136,27 +174,39 @@ public class GameManager : MonoBehaviour
 
     private void LateUpdate()
     {
-        BlinkyTargetUpdate();
-        PinkyTargetUpdate();
-        InkyTargetUpdate();
-        ClydeTargetUpdate();
+        if (play)
+        {
+            BlinkyTargetUpdate();
+            PinkyTargetUpdate();
+            InkyTargetUpdate();
+            ClydeTargetUpdate();
+        }
     }
 
     void Update()
     {
-        BlinkyUpdate();
-        PinkyUpdate();
-        InkyUpdate();
-        ClydeUpdate();
-        //if (Input.GetKeyDown(KeyCode.E))
-        //    if (ghostQueue.Count > 0)
-        //        ghostQueue.Dequeue().Init();
+        if (play)
+        {
+            BlinkyUpdate();
+            PinkyUpdate();
+            InkyUpdate();
+            ClydeUpdate();
 
-        if (pelletsLeft == 214)
-            inky.Init();
-        else if (pelletsLeft == 184)
-            clyde.Init();
+            if (pelletsLeft < 214 && !inky.active)
+                inky.Init();
+            else if (pelletsLeft < 184 && !clyde.active)
+                clyde.Init();
 
+
+            if (Input.GetKeyDown(KeyCode.Space))
+            {
+                for (int i = 0; i < allGhosts.Length; i++)
+                {
+                    if (allGhosts[i].active && allGhosts[i].state != GhostState.Frightened && allGhosts[i].state != GhostState.Dead)
+                        allGhosts[i].SetFrightened(6);
+                }
+            }
+        }
     }
 
     private void BlinkyUpdate()
@@ -292,12 +342,23 @@ public class GameManager : MonoBehaviour
         //else
         //    clydeTarget.position = 2 * clyde.transform.position - pacman.transform.position;
     }
-    
+
+    public void ResetBoard()
+    {
+        Debug.Log("GAMEMANAGER: Reseting board...");
+        play = false;
+        StartCoroutine(StartGame(3.1f));
+        pacman.ResetSettings();//transform.position = new Vector3(0, 0, -8);
+        blinky.ResetSettings();//transform.position = new Vector3(0, 0, 4);
+        pinky.ResetSettings(); //transform.position = new Vector3(0, 0, 1);
+        inky.ResetSettings();  //transform.position = new Vector3(-2, 0, 1);
+        clyde.ResetSettings(); //transform.position = new Vector3(2, 0, 1);
+    }
 
     public IEnumerator Oscillate(GhostController ghost)
     {
         float progress = 0.5f;
-
+        
         Vector3 top = new Vector3(ghost.transform.position.x, ghost.transform.position.y, ghost.transform.position.z + 0.5f);
         Vector3 bottom = new Vector3(ghost.transform.position.x, ghost.transform.position.y, ghost.transform.position.z - 0.5f);
 
@@ -328,7 +389,7 @@ public class GameManager : MonoBehaviour
         //Debug.Log("Triggered escape!");
         ghost.OscillationShouldFinish = true;
 
-        Vector3 pos = ghost.transform.position;
+        Vector3 pos = ghost.defaultPosition;
         Vector3 middle = new Vector3(0, 0, 1);
         Vector3 outside = new Vector3(0, 0, 4);
 
@@ -389,6 +450,70 @@ public class GameManager : MonoBehaviour
         return Mathf.Abs(((2 * x - 0.5f) % 2) - 1);
     }
 
+    private int player1Lifes = 0;
+    private int player2Lifes = 0;
+
+    public void AddLife(int player, int amount = 1)
+    {
+        if (player == 1)
+        {
+            if (player1Lifes + amount <= 3)
+                player1Lifes += amount;
+
+            player1Text.text = txtDefaultP1;
+            for (int i = 0; i < player1Lifes; i++)
+            {
+                player1Text.text += hrt;
+            }
+        }
+        else if (player == 2)
+        {
+            if (player2Lifes + amount <= 3)
+                player2Lifes += amount;
+
+            player2Text.text = txtDefaultP2;
+
+            if (!blinky.ai) player2Text.text += txtBlinky;
+            else if (!pinky.ai) player2Text.text += txtPinky;
+            else if (!inky.ai) player2Text.text += txtInky;
+            else if (!clyde.ai) player2Text.text += txtClyde;
+
+            for (int i = 0; i < player2Lifes; i++)
+            {
+                player2Text.text += hrt;
+            }
+        }
+    }
+
+    public void LoseLife(int player)
+    {
+        if (player == 1)
+        {
+            if (player1Lifes > 0)
+                player1Lifes--;
+            player1Text.text = txtDefaultP1;
+            for (int i = 0; i < player1Lifes; i++)
+            {
+                player1Text.text += hrt;
+            }
+        }
+        else if (player == 2)
+        {
+            if (player2Lifes > 0)
+                player2Lifes--;
+            player2Text.text = txtDefaultP2;
+
+            if (!blinky.ai) player2Text.text += txtBlinky;
+            else if (!pinky.ai) player2Text.text += txtPinky;
+            else if (!inky.ai) player2Text.text += txtInky;
+            else if (!clyde.ai) player2Text.text += txtClyde;
+
+            for (int i = 0; i < player2Lifes; i++)
+            {
+                player2Text.text += hrt;
+            }
+        }
+    }
 
 }
 

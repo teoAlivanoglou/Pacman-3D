@@ -1,4 +1,5 @@
-﻿using System.Collections;
+﻿using System;
+using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
 
@@ -13,31 +14,42 @@ public class PacmanController : MonoBehaviour
 
     private Rigidbody rb;
 
+    public bool play = false;
+
     private void Awake()
     {
         rb = GetComponent<Rigidbody>();
+        ResetSettings();
     }
 
-    private Vector3 direction;// = Vector3.forward;
-    private Vector3 nextDirection;// = Vector3.forward;
+    private Vector3 direction;
+    private Vector3 nextDirection;
 
     private void Update()
     {
-        if (!Dead)
+        if (play)
         {
-            HandleInput();
+            if (!Dead)
+            {
+                HandleInput();
 
-            if (CanTurn(nextDirection))
-                direction = nextDirection;
+                if (CanTurn(nextDirection))
+                    direction = nextDirection;
 
-            RotateModel();
+                RotateModel();
+            }
         }
     }
 
     private void FixedUpdate()
     {
-        if (CanMoveForwardOrBackward(direction))
-            rb.velocity = direction * speed;
+        if (play)
+        {
+            if (CanMoveForwardOrBackward(direction))
+                rb.velocity = direction * speed;
+        }
+        else
+            rb.velocity = Vector3.zero;
     }
 
     private void RotateModel()
@@ -109,10 +121,12 @@ public class PacmanController : MonoBehaviour
             nextDirection = wantedNextDir;
     }
 
-    public void Die ()
+    public void Die()
     {
         Dead = true;
-        rb.isKinematic = true;
+
+        GameManager.Instance.LoseLife(1);
+        GameManager.Instance.ResetBoard();
     }
 
 
@@ -126,5 +140,12 @@ public class PacmanController : MonoBehaviour
     public void Score(int score)
     {
 
+    }
+
+    public void ResetSettings()
+    {
+        transform.position = new Vector3(0, 0, -8);
+        Dead = false;
+        play = false;
     }
 }
