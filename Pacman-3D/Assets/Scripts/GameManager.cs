@@ -51,6 +51,8 @@ public class GameManager : MonoBehaviour
     private Vector3 inkyResetPos;
     private Vector3 clydeResetPos;
 
+    private Queue<GhostController> ghostQueue;
+
 
     private static GameManager _instance;
     public static GameManager Instance {
@@ -71,7 +73,7 @@ public class GameManager : MonoBehaviour
         blinkyScatterPos = new Vector3(11.5f, 0, 18f);
         blinkyResetPos = new Vector3(0, 0, 1);
 
-        pinkyScatterPos  = new Vector3(-11.5f, 0, 18f);
+        pinkyScatterPos = new Vector3(-11.5f, 0, 18f);
         pinkyResetPos = new Vector3(0, 0, 1);
 
         inkyScatterPos = new Vector3(14f, 0, -18f);
@@ -79,6 +81,11 @@ public class GameManager : MonoBehaviour
 
         clydeScatterPos = new Vector3(-14f, 0, -18f);
         clydeResetPos = new Vector3(2, 0, 1);
+
+        ghostQueue = new Queue<GhostController>();
+        ghostQueue.Enqueue(pinky);
+        ghostQueue.Enqueue(inky);
+        ghostQueue.Enqueue(clyde);
     }
 
     /*
@@ -94,6 +101,11 @@ public class GameManager : MonoBehaviour
         blinky.speed = pinky.speed = inky.speed = clyde.speed = baseGhostSpeed;
 
         PlayAudio(audioAmbient, AudioPlayMode.continuous);
+
+        blinky.WakeUp();
+        pinky.WakeUp();
+        inky.WakeUp();
+        clyde.WakeUp();
     }
 
     private void SetupBasedOnLevel()
@@ -139,6 +151,10 @@ public class GameManager : MonoBehaviour
         PinkyUpdate();
         InkyUpdate();
         ClydeUpdate();
+        if (Input.GetKeyDown(KeyCode.E))
+            if (ghostQueue.Count > 0)
+                ghostQueue.Dequeue().Init();
+
     }
 
     private void BlinkyUpdate()
@@ -148,7 +164,7 @@ public class GameManager : MonoBehaviour
             blinky.speed = baseGhostSpeed * 2;
             if (Vector3.Distance(blinky.transform.position, blinkyResetPos) < targetDistanceThresshold)
             {
-                blinky.Resurect();
+                blinky.Resurrect();
             }
         }
         else
@@ -168,7 +184,7 @@ public class GameManager : MonoBehaviour
             pinky.speed = baseGhostSpeed * 2;
             if (Vector3.Distance(pinky.transform.position, pinkyResetPos) < targetDistanceThresshold)
             {
-                pinky.Resurect();
+                pinky.Resurrect();
             }
         }
         else
@@ -184,7 +200,7 @@ public class GameManager : MonoBehaviour
             inky.speed = baseGhostSpeed * 2;
             if (Vector3.Distance(inky.transform.position, inkyResetPos) < targetDistanceThresshold)
             {
-                inky.Resurect();
+                inky.Resurrect();
             }
         }
         else
@@ -200,7 +216,7 @@ public class GameManager : MonoBehaviour
             clyde.speed = baseGhostSpeed * 2;
             if (Vector3.Distance(clyde.transform.position, clydeResetPos) < targetDistanceThresshold)
             {
-                clyde.Resurect();
+                clyde.Resurrect();
             }
         }
         else
@@ -272,7 +288,100 @@ public class GameManager : MonoBehaviour
             audioSource.PlayOneShot(clip);
         }
     }
+
+    public bool OscillationDone = false;
+    public bool OscillationShouldFinish = false;
+
+    public IEnumerator Oscillate(Transform who)
+    {
+        float progress = 0.5f;
+
+        Vector3 top = new Vector3(who.position.x, who.position.y, who.position.z + 0.5f);
+        Vector3 bottom = new Vector3(who.position.x, who.position.y, who.position.z - 0.5f);
+
+        float speed = baseGhostSpeed / 2;
+
+        while (!OscillationDone)
+        {
+            progress += speed * Time.deltaTime;
+            who.position = Vector3.Lerp(top, bottom, TriangleWave(progress));
+
+            if (OscillationShouldFinish && progress - Mathf.Floor(progress) < 0.1f)
+            {
+                Debug.Log("Oscillation done!");
+                OscillationDone = true;
+            }
+
+            yield return null;
+        }
+        who.position = new Vector3(who.position.x, who.position.y, 1);
+    }
+
+    public IEnumerator Escape(Transform obj, Coroutine oldCr)
+    {
+        //StopCoroutine(oldCr);
+        Debug.Log("Triggered escape!");
+        OscillationShouldFinish = true;
+
+        Vector3 pos = obj.position;
+        Vector3 middle = new Vector3(0, 0, 1);
+        Vector3 outside = new Vector3(0, 0, 4);
+
+        int step = 0;
+        float progress = 0;
+
+        float speed = baseGhostSpeed / 2;
+        float speedMod = 2 / Vector3.Distance(pos, middle);
+
+        while (step == 0 && progress <= 1)
+        {
+            if (OscillationDone)
+            {
+                Debug.Log("Escaping...");
+                progress += speed * speedMod * Time.deltaTime;
+
+                obj.position = Vector3.Lerp(pos, middle, progress);
+
+                if (progress >= 1)
+                {
+                    progress = 0;
+                    step++;
+                }
+            }
+            yield return null;
+        }
+
+        //speedMod = 0.5f;
+        speedMod = 2 / Vector3.Distance(middle, outside);
+
+        while (step == 1 && progress <= 1)
+        {
+            if (OscillationDone)
+            {
+                progress += speed * speedMod * Time.deltaTime;
+
+                obj.position = Vector3.Lerp(middle, outside, progress);
+
+                if (progress >= 1)
+                {
+                    progress = 0;
+                    step++;
+                }
+
+                yield return null;
+            }
+        }
+    }
+
+    public static float TriangleWave(float x)
+    {
+        //return Mathf.Abs(((4 * x - 5) % 4) - 2) - 1;
+        return Mathf.Abs(((2 * x - 0.5f) % 2) - 1);
+    }
+
+
 }
+
 
 public enum AudioPlayMode
 {

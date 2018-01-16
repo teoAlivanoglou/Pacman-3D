@@ -14,26 +14,52 @@ public class GhostController : MonoBehaviour
     public float speed;
 
     public bool ai = true;
+    public bool active = false;
     public bool debug = false;
-
 
     private Rigidbody rb;
     private Queue<Action> actionQueue = new Queue<Action>();
+    private Animator anim;
 
     private void Awake()
     {
         rb = GetComponent<Rigidbody>();
+        anim = GetComponent<Animator>();
+        anim.enabled = false;
         if (ai)
-            nextDirection = Vector3.left;
+            nextDirection = Vector3.right;
     }
 
     private void Start()
     {
         QueueActions();
+        //if (!active)
+        //    anim.Play("GhostUpDownAnim", PlayMode.StopAll);
+
+    }
+
+    Coroutine oldCr;
+
+    public void WakeUp()
+    {
+        //anim.SetTrigger("WakeUp");
+        if (!active)
+            oldCr = StartCoroutine(GameManager.Instance.Oscillate(transform));
+    }
+
+    public void Init()
+    {
+        //anim.SetTrigger("GoOut");
+        StartCoroutine(GameManager.Instance.Escape(transform, oldCr));
+        active = true;
     }
 
     public void QueueActions()
     {
+        if (!ai)
+            return;
+
+        timer = 0;
         actionQueue.Enqueue(() => ChangeState(7, GhostState.Scatter));
         actionQueue.Enqueue(() => ChangeState(20, GhostState.Chase));
 
@@ -51,10 +77,9 @@ public class GhostController : MonoBehaviour
 
     private void ChangeState(float time, GhostState newState)
     {
+        if (debug) Debug.Log("I'll " + newState + " for " + time + "seconds.");
         timer = time;
         state = newState;
-        if (ai)
-            FlipDirection();
     }
 
     private Vector3 direction;// = Vector3.forward;
@@ -62,27 +87,30 @@ public class GhostController : MonoBehaviour
 
     private void Update()
     {
-        if (!pacman.Dead)
+        if (active)
         {
-            if (!ai)
+            if (!pacman.Dead)
             {
-                HandleInput();
+                if (!ai)
+                {
+                    HandleInput();
+                    if (CanTurn(nextDirection))
+                        direction = nextDirection;
+                }
+
+                RotateModel();
+
+                if (Input.GetKeyDown(KeyCode.Space))
+                    if (ai && state != GhostState.Frightened && state != GhostState.Dead)
+                        SetFrightened(6);
+
             }
-            if (CanTurn(nextDirection))
-                direction = nextDirection;
-
-            RotateModel();
-            TimeGhostState();
-
-            if (Input.GetKeyDown(KeyCode.Space))
-                if (ai && state != GhostState.Frightened && state != GhostState.Dead)
-                    SetFrightened(6);
-
+            else
+            {
+                rb.isKinematic = true;
+            }
         }
-        else
-        {
-            rb.isKinematic = true;
-        }
+        TimeGhostState();
     }
 
     void TimeGhostState()
@@ -92,15 +120,26 @@ public class GhostController : MonoBehaviour
             if (timer > 0)
                 timer -= Time.deltaTime;
             else
+            {
+                FlipDirection();
                 actionQueue.Dequeue()();
+            }
         }
     }
 
     private void FixedUpdate()
     {
-        //if (!pacman.Dead)
-        if (CanMoveForwardOrBackward(direction))
-            rb.velocity = direction * speed;
+        if (active)
+        {
+            if (setPositionToLastNode)
+            {
+                transform.position = LastNode.transform.position;
+                setPositionToLastNode = false;
+            }
+
+            if (CanMoveForwardOrBackward(direction))
+                rb.velocity = direction * speed;
+        }
     }
 
     public AINode LastNode;// { get; protected set; }
@@ -115,30 +154,46 @@ public class GhostController : MonoBehaviour
         {
             List<Vector3> allowedDirs = node.GetAllowedDirs(state, direction);// GetAllowedDirections();
 
+            if (anim.enabled)
+                if (allowedDirs.Contains(Vector3.left))
+                    anim.enabled = false;
+
             int minIndex = -1;
             float minDistance = float.PositiveInfinity;
 
-            for (int i = 0; i < allowedDirs.Count; i++)
+            if (allowedDirs.Count > 0)
             {
-                float currentDistance = Vector3.Distance(
-                    transform.position + allowedDirs[i], target.position);
-
-                if (currentDistance < minDistance)
+                for (int i = 0; i < allowedDirs.Count; i++)
                 {
-                    minDistance = currentDistance;
-                    minIndex = i;
+                    float currentDistance = Vector3.Distance(
+                        transform.position + allowedDirs[i], target.position);
+
+                    if (currentDistance < minDistance)
+                    {
+                        minDistance = currentDistance;
+                        minIndex = i;
+                    }
                 }
+                //Debug.Log("best distance = " + allowedDirs[minIndex]);
+                nextDirection = allowedDirs[minIndex];
             }
-            //Debug.Log("best distance = " + allowedDirs[minIndex]);
-            nextDirection = allowedDirs[minIndex];
-            transform.position = node.transform.position;
+            else
+            {
+                nextDirection = Vector3.forward;
+            }
+
+            setPositionToLastNode = true;
             direction = nextDirection;
         }
     }
 
+    bool setPositionToLastNode = false;
+
     public void FlipDirection()
     {
-        direction = nextDirection = -direction;
+        //if (lastState != GhostState.Dead)
+        if (LastNode != null)
+            direction = nextDirection = -direction;
     }
 
 
@@ -161,7 +216,11 @@ public class GhostController : MonoBehaviour
         {
             return true;
         }
-        else return false;
+        else
+        {
+            //Debug.Log("cant move forward :/");
+            return false;
+        }
     }
 
     private bool CanRegisterNextDir(Vector3 checkDir)
@@ -173,6 +232,9 @@ public class GhostController : MonoBehaviour
         else
         {
             Vector3 forward = transform.position + transform.forward * rayCastOrigin;
+
+            Debug.DrawRay(forward, checkDir * rayCastDistance, Color.green, 2f);
+
             return !Physics.Raycast(forward, checkDir, rayCastDistance, obstacles) &&
                 !Physics.Raycast(transform.position, checkDir, rayCastDistance, obstacles);
         }
@@ -226,10 +288,10 @@ public class GhostController : MonoBehaviour
         StopAllCoroutines();
     }
 
-    public void Resurect()
+    public void Resurrect()
     {
         GetComponentInChildren<BodyMesh>().ResetColor();
-        state = GhostState.Scatter;
+        //state = GhostState.Scatter;
         LastNode = null;
         QueueActions();
         GetComponentInChildren<BodyMesh>().Enable();
@@ -245,7 +307,7 @@ public class GhostController : MonoBehaviour
         GetComponentInChildren<BodyMesh>().SetColor(Color.blue);
         StartCoroutine(EndFrightened(seconds));
     }
-    
+
     IEnumerator EndFrightened(int time)
     {
         while (state == GhostState.Frightened)

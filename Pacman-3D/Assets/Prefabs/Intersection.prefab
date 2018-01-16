@@ -52,7 +52,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   ghosts: []
-  distanceThresshold: 0.1
+  distanceThresshold: 0.15
   isSpecialNode: 0
   isHouseNode: 0
   up: 0
