@@ -17,6 +17,8 @@ public class GhostController : MonoBehaviour
     public bool active = false;
     public bool debug = false;
 
+    public bool randomMovement = false;
+
     private Rigidbody rb;
     private Queue<Action> actionQueue = new Queue<Action>();
     private Animator anim;
@@ -38,20 +40,22 @@ public class GhostController : MonoBehaviour
 
     }
 
+    public bool OscillationDone = false;
+    public bool OscillationShouldFinish = false;
     Coroutine oldCr;
 
     public void WakeUp()
     {
         //anim.SetTrigger("WakeUp");
         if (!active)
-            oldCr = StartCoroutine(GameManager.Instance.Oscillate(transform));
+            oldCr = StartCoroutine(GameManager.Instance.Oscillate(this));
     }
 
     public void Init()
     {
         //anim.SetTrigger("GoOut");
-        StartCoroutine(GameManager.Instance.Escape(transform, oldCr));
-        active = true;
+        StartCoroutine(GameManager.Instance.Escape(this, oldCr));
+        //active = true;
     }
 
     public void QueueActions()
@@ -77,7 +81,7 @@ public class GhostController : MonoBehaviour
 
     private void ChangeState(float time, GhostState newState)
     {
-        if (debug) Debug.Log("I'll " + newState + " for " + time + "seconds.");
+        //if (debug) Debug.Log("I'll " + newState + " for " + time + "seconds.");
         timer = time;
         state = newState;
     }
@@ -133,7 +137,8 @@ public class GhostController : MonoBehaviour
         {
             if (setPositionToLastNode)
             {
-                transform.position = LastNode.transform.position;
+                if (LastNode != null)
+                    transform.position = LastNode.transform.position;
                 setPositionToLastNode = false;
             }
 
@@ -154,28 +159,30 @@ public class GhostController : MonoBehaviour
         {
             List<Vector3> allowedDirs = node.GetAllowedDirs(state, direction);// GetAllowedDirections();
 
-            if (anim.enabled)
-                if (allowedDirs.Contains(Vector3.left))
-                    anim.enabled = false;
-
             int minIndex = -1;
             float minDistance = float.PositiveInfinity;
 
             if (allowedDirs.Count > 0)
             {
-                for (int i = 0; i < allowedDirs.Count; i++)
+                if (!randomMovement)
                 {
-                    float currentDistance = Vector3.Distance(
-                        transform.position + allowedDirs[i], target.position);
-
-                    if (currentDistance < minDistance)
+                    for (int i = 0; i < allowedDirs.Count; i++)
                     {
-                        minDistance = currentDistance;
-                        minIndex = i;
+                        float currentDistance = Vector3.Distance(
+                            transform.position + allowedDirs[i], target.position);
+
+                        if (currentDistance < minDistance)
+                        {
+                            minDistance = currentDistance;
+                            minIndex = i;
+                        }
                     }
+                    nextDirection = allowedDirs[minIndex];
                 }
-                //Debug.Log("best distance = " + allowedDirs[minIndex]);
-                nextDirection = allowedDirs[minIndex];
+                else
+                {
+                    nextDirection = allowedDirs[UnityEngine.Random.Range(0, allowedDirs.Count)];
+                }
             }
             else
             {
@@ -192,10 +199,9 @@ public class GhostController : MonoBehaviour
     public void FlipDirection()
     {
         //if (lastState != GhostState.Dead)
-        if (LastNode != null)
+        //if (LastNode != null)
             direction = nextDirection = -direction;
     }
-
 
     private void RotateModel()
     {
@@ -263,13 +269,13 @@ public class GhostController : MonoBehaviour
         // temporary direction, to check input validity
         Vector3 wantedNextDir = direction;
 
-        if (Input.GetKeyDown(KeyCode.UpArrow))
+        if (Input.GetKey(KeyCode.UpArrow))
             wantedNextDir = Vector3.forward;
-        else if (Input.GetKeyDown(KeyCode.LeftArrow))
+        else if (Input.GetKey(KeyCode.LeftArrow))
             wantedNextDir = Vector3.left;
-        else if (Input.GetKeyDown(KeyCode.DownArrow))
+        else if (Input.GetKey(KeyCode.DownArrow))
             wantedNextDir = Vector3.back;
-        else if (Input.GetKeyDown(KeyCode.RightArrow))
+        else if (Input.GetKey(KeyCode.RightArrow))
             wantedNextDir = Vector3.right;
         else return;
 
@@ -280,18 +286,17 @@ public class GhostController : MonoBehaviour
 
     public void Die()
     {
-        GameManager.Instance.PlayAudio(GameManager.Instance.audioGhostEaten, AudioPlayMode.mixed);
         state = GhostState.Dead;
         GetComponentInChildren<BodyMesh>().Disable();
         actionQueue.Clear();
-        //StopCoroutine("EndFrightened");
+        randomMovement = false;
         StopAllCoroutines();
     }
 
     public void Resurrect()
     {
         GetComponentInChildren<BodyMesh>().ResetColor();
-        //state = GhostState.Scatter;
+        randomMovement = false;
         LastNode = null;
         QueueActions();
         GetComponentInChildren<BodyMesh>().Enable();
@@ -305,6 +310,8 @@ public class GhostController : MonoBehaviour
         lastState = state;
         state = GhostState.Frightened;
         GetComponentInChildren<BodyMesh>().SetColor(Color.blue);
+        FlipDirection();
+        randomMovement = true;
         StartCoroutine(EndFrightened(seconds));
     }
 
@@ -313,6 +320,7 @@ public class GhostController : MonoBehaviour
         while (state == GhostState.Frightened)
         {
             yield return new WaitForSeconds(time);
+            randomMovement = false;
             state = lastState;
             GetComponentInChildren<BodyMesh>().ResetColor();
         }

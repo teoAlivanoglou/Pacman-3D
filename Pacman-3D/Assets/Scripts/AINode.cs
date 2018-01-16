@@ -63,11 +63,17 @@ public class AINode : MonoBehaviour
     {
         for (int i = 0; i < ghosts.Length; i++)
         {
-            if (Vector3.Distance(ghosts[i].transform.position, transform.position) < distanceThresshold)
-                if (ghosts[i].LastNode != this)
+            if (ghosts[i].LastNode != this)
+            {
+                if (Vector3.Distance(ghosts[i].transform.position, transform.position) < distanceThresshold)
                 {
                     ghosts[i].NodeHit(this);
                 }
+            }
+            else if (Vector3.Distance(ghosts[i].transform.position, transform.position) > distanceThresshold)
+            {
+                ghosts[i].LastNode = null;
+            }
         }
     }
 }

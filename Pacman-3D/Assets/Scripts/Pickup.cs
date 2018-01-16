@@ -5,7 +5,7 @@ using UnityEngine;
 public class Pickup : MonoBehaviour {
 
     public int score = 10;
-
+    
     private void OnTriggerEnter(Collider other)
     {
         //Debug.Log("Collided with " + other.name);
@@ -15,8 +15,8 @@ public class Pickup : MonoBehaviour {
         {
             GameManager.Instance.pelletsLeft--;
             pacman.Score(score);
-            GameManager.Instance.PlayAudio(GameManager.Instance.audioWakka, AudioPlayMode.mixed);
-            Destroy(gameObject);
+            //Destroy(gameObject);
+            gameObject.SetActive(false);
         }
     }
 }

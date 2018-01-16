@@ -94,13 +94,13 @@ public class PacmanController : MonoBehaviour
         // temporary direction, to check input validity
         Vector3 wantedNextDir = direction;
 
-        if (Input.GetKeyDown(KeyCode.W))
+        if (Input.GetKey(KeyCode.W))
             wantedNextDir = Vector3.forward;
-        else if (Input.GetKeyDown(KeyCode.A))
+        else if (Input.GetKey(KeyCode.A))
             wantedNextDir = Vector3.left;
-        else if (Input.GetKeyDown(KeyCode.S))
+        else if (Input.GetKey(KeyCode.S))
             wantedNextDir = Vector3.back;
-        else if (Input.GetKeyDown(KeyCode.D))
+        else if (Input.GetKey(KeyCode.D))
             wantedNextDir = Vector3.right;
         else return;
 
@@ -113,8 +113,6 @@ public class PacmanController : MonoBehaviour
     {
         Dead = true;
         rb.isKinematic = true;
-        //Debug.Log("My name's " + transform.name + " and I'm dead af.");
-        GameManager.Instance.PlayAudio(GameManager.Instance.audioPacmanEaten, AudioPlayMode.once);
     }
 
 

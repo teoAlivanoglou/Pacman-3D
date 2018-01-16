@@ -22,7 +22,7 @@ public class GameManager : MonoBehaviour
     public float targetDistanceThresshold = 0.1f;
 
     [Header("GameplayAdjusters")]
-    [Range(1, 20)]
+    [Range(0, 20)]
     public int level = 1;
     public int pacmanScore = 0;
     public int pelletsLeft;
@@ -32,15 +32,7 @@ public class GameManager : MonoBehaviour
     private float aggressiveSpeedFaster;
     private int aggressivePellets;
     private int aggressivePelletsFaster;
-
-    [Header("Sound")]
-    public AudioSource audioSource;
-    public AudioClip audioAmbient;
-    public AudioClip audioWakka;
-    public AudioClip audioPacmanEaten;
-    public AudioClip audioGhostEaten;
-
-
+    
     private Vector3 blinkyScatterPos;
     private Vector3 pinkyScatterPos;
     private Vector3 inkyScatterPos;
@@ -100,17 +92,19 @@ public class GameManager : MonoBehaviour
 
         blinky.speed = pinky.speed = inky.speed = clyde.speed = baseGhostSpeed;
 
-        PlayAudio(audioAmbient, AudioPlayMode.continuous);
-
         blinky.WakeUp();
         pinky.WakeUp();
         inky.WakeUp();
         clyde.WakeUp();
+
+        pinky.Init();
     }
 
     private void SetupBasedOnLevel()
     {
-        if (level <= 1)
+        if (level <= 0)
+            InitSetUp(0, 20, 80);
+        else if (level <= 1)
             InitSetUp(75, 20, 80);
         else if (level <= 2)
             InitSetUp(85, 30, 90);
@@ -140,20 +134,28 @@ public class GameManager : MonoBehaviour
         this.aggressivePelletsFaster = aggressivePellets / 2;
     }
 
-    void Update()
+    private void LateUpdate()
     {
         BlinkyTargetUpdate();
         PinkyTargetUpdate();
         InkyTargetUpdate();
         ClydeTargetUpdate();
+    }
 
+    void Update()
+    {
         BlinkyUpdate();
         PinkyUpdate();
         InkyUpdate();
         ClydeUpdate();
-        if (Input.GetKeyDown(KeyCode.E))
-            if (ghostQueue.Count > 0)
-                ghostQueue.Dequeue().Init();
+        //if (Input.GetKeyDown(KeyCode.E))
+        //    if (ghostQueue.Count > 0)
+        //        ghostQueue.Dequeue().Init();
+
+        if (pelletsLeft == 214)
+            inky.Init();
+        else if (pelletsLeft == 184)
+            clyde.Init();
 
     }
 
@@ -233,6 +235,8 @@ public class GameManager : MonoBehaviour
             blinkyTarget.position = blinkyScatterPos;
         else if (blinky.state == GhostState.Dead)
             blinkyTarget.position = blinkyResetPos;
+        //else
+        //    blinkyTarget.position = 2 * blinky.transform.position - pacman.transform.position;
     }
 
     private void PinkyTargetUpdate()
@@ -243,6 +247,8 @@ public class GameManager : MonoBehaviour
             pinkyTarget.position = pinkyScatterPos;
         else if (pinky.state == GhostState.Dead)
             pinkyTarget.position = pinkyResetPos;
+        //else
+        //    pinkyTarget.position = 2 * pinky.transform.position - pacman.transform.position;
     }
 
     private void InkyTargetUpdate()
@@ -257,73 +263,72 @@ public class GameManager : MonoBehaviour
             inkyTarget.position = inkyScatterPos;
         else if (inky.state == GhostState.Dead)
             inkyTarget.position = inkyResetPos;
+        //else
+        //    inkyTarget.position = 2 * inky.transform.position - pacman.transform.position;
     }
+
+    private bool canFlip = true;
 
     private void ClydeTargetUpdate()
     {
-        if (clyde.state == GhostState.Chase && Vector3.Distance(pacman.transform.position, clyde.transform.position) > 8)
-            clydeTarget.position = pacman.transform.position;
+        if (clyde.state == GhostState.Chase)
+        {
+            bool pacmanIsClose = Vector3.Distance(pacman.transform.position, clyde.transform.position) < 8;
+
+            if (pacmanIsClose)
+            {
+                clyde.randomMovement = false;
+                clydeTarget.position = pacman.transform.position;
+            }
+            else
+            {
+                clyde.randomMovement = true;
+            }
+        }
         else if (clyde.state == GhostState.Scatter)
             clydeTarget.position = clydeScatterPos;
         else if (clyde.state == GhostState.Dead)
             clydeTarget.position = clydeResetPos;
+        //else
+        //    clydeTarget.position = 2 * clyde.transform.position - pacman.transform.position;
     }
+    
 
-    public void PlayAudio(AudioClip clip, AudioPlayMode playMode)
-    {
-        if (playMode == AudioPlayMode.once)
-        {
-            audioSource.clip = clip;
-            audioSource.loop = false;
-            audioSource.Play();
-        }
-        else if (playMode == AudioPlayMode.continuous)
-        {
-            audioSource.clip = clip;
-            audioSource.loop = true;
-            audioSource.Play();
-        }
-        else if (playMode == AudioPlayMode.mixed)
-        {
-            audioSource.PlayOneShot(clip);
-        }
-    }
-
-    public bool OscillationDone = false;
-    public bool OscillationShouldFinish = false;
-
-    public IEnumerator Oscillate(Transform who)
+    public IEnumerator Oscillate(GhostController ghost)
     {
         float progress = 0.5f;
 
-        Vector3 top = new Vector3(who.position.x, who.position.y, who.position.z + 0.5f);
-        Vector3 bottom = new Vector3(who.position.x, who.position.y, who.position.z - 0.5f);
+        Vector3 top = new Vector3(ghost.transform.position.x, ghost.transform.position.y, ghost.transform.position.z + 0.5f);
+        Vector3 bottom = new Vector3(ghost.transform.position.x, ghost.transform.position.y, ghost.transform.position.z - 0.5f);
 
         float speed = baseGhostSpeed / 2;
 
-        while (!OscillationDone)
+        while (!ghost.OscillationDone)
         {
             progress += speed * Time.deltaTime;
-            who.position = Vector3.Lerp(top, bottom, TriangleWave(progress));
 
-            if (OscillationShouldFinish && progress - Mathf.Floor(progress) < 0.1f)
+            Vector3 nextPos = Vector3.Lerp(top, bottom, TriangleWave(progress));
+            ghost.transform.LookAt(nextPos, Vector3.up);
+            ghost.transform.position = nextPos;
+
+            if (ghost.OscillationShouldFinish && progress - Mathf.Floor(progress) < 0.1f)
             {
-                Debug.Log("Oscillation done!");
-                OscillationDone = true;
+                //Debug.Log("Oscillation done!");
+                ghost.OscillationDone = true;
             }
 
             yield return null;
         }
-        who.position = new Vector3(who.position.x, who.position.y, 1);
+        ghost.transform.position = new Vector3(ghost.transform.position.x, ghost.transform.position.y, 1);
     }
 
-    public IEnumerator Escape(Transform obj, Coroutine oldCr)
+    public IEnumerator Escape(GhostController ghost, Coroutine oldCr)
     {
         //StopCoroutine(oldCr);
-        Debug.Log("Triggered escape!");
-        OscillationShouldFinish = true;
+        //Debug.Log("Triggered escape!");
+        ghost.OscillationShouldFinish = true;
 
-        Vector3 pos = obj.position;
+        Vector3 pos = ghost.transform.position;
         Vector3 middle = new Vector3(0, 0, 1);
         Vector3 outside = new Vector3(0, 0, 4);
 
@@ -335,12 +340,14 @@ public class GameManager : MonoBehaviour
 
         while (step == 0 && progress <= 1)
         {
-            if (OscillationDone)
+            if (ghost.OscillationDone)
             {
-                Debug.Log("Escaping...");
+                //Debug.Log("Escaping...");
                 progress += speed * speedMod * Time.deltaTime;
 
-                obj.position = Vector3.Lerp(pos, middle, progress);
+                Vector3 nextPos = Vector3.Lerp(pos, middle, progress);
+                ghost.transform.LookAt(nextPos, Vector3.up);
+                ghost.transform.position = nextPos;
 
                 if (progress >= 1)
                 {
@@ -356,11 +363,13 @@ public class GameManager : MonoBehaviour
 
         while (step == 1 && progress <= 1)
         {
-            if (OscillationDone)
+            if (ghost.OscillationDone)
             {
                 progress += speed * speedMod * Time.deltaTime;
 
-                obj.position = Vector3.Lerp(middle, outside, progress);
+                Vector3 nextPos = Vector3.Lerp(middle, outside, progress);
+                ghost.transform.LookAt(nextPos, Vector3.up);
+                ghost.transform.position = nextPos;
 
                 if (progress >= 1)
                 {
@@ -371,6 +380,7 @@ public class GameManager : MonoBehaviour
                 yield return null;
             }
         }
+        ghost.active = true;
     }
 
     public static float TriangleWave(float x)
