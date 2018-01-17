@@ -103,17 +103,18 @@ public class GameManager : MonoBehaviour
 
     GhostController[] allGhosts;
 
+    private int player1Lives = 3;
+    private int player2Lives = 3;
+
+
     private void Start()
     {
-        AddLife(1, 3);
-        AddLife(2, 3);
-
         SetupBasedOnLevel();
 
         allGhosts = new GhostController[] { blinky, pinky, inky, clyde };
 
         blinky.speed = pinky.speed = inky.speed = clyde.speed = baseGhostSpeed;
-        ResetBoard();
+        //ResetBoard();
     }
 
     private IEnumerator StartGame(float time)
@@ -192,9 +193,9 @@ public class GameManager : MonoBehaviour
             InkyUpdate();
             ClydeUpdate();
 
-            if (pelletsLeft < 214 && !inky.active)
+            if (pelletsLeft < 214 && !inky.activated)
                 inky.Init();
-            else if (pelletsLeft < 184 && !clyde.active)
+            else if (pelletsLeft < 184 && !clyde.activated)
                 clyde.Init();
 
 
@@ -316,9 +317,7 @@ public class GameManager : MonoBehaviour
         //else
         //    inkyTarget.position = 2 * inky.transform.position - pacman.transform.position;
     }
-
-    private bool canFlip = true;
-
+    
     private void ClydeTargetUpdate()
     {
         if (clyde.state == GhostState.Chase)
@@ -345,9 +344,11 @@ public class GameManager : MonoBehaviour
 
     public void ResetBoard()
     {
-        Debug.Log("GAMEMANAGER: Reseting board...");
+        //Debug.Log("GAMEMANAGER: Reseting board...");
+        DisplayUI();
+
         play = false;
-        StartCoroutine(StartGame(3.1f));
+        StartCoroutine(StartGame(3.0f));
         pacman.ResetSettings();//transform.position = new Vector3(0, 0, -8);
         blinky.ResetSettings();//transform.position = new Vector3(0, 0, 4);
         pinky.ResetSettings(); //transform.position = new Vector3(0, 0, 1);
@@ -388,6 +389,9 @@ public class GameManager : MonoBehaviour
         //StopCoroutine(oldCr);
         //Debug.Log("Triggered escape!");
         ghost.OscillationShouldFinish = true;
+        //ghost.direction = Vector3.right;
+        //if (!ghost.isBlinky)
+            ghost.active = false; //isEscaping = true;
 
         Vector3 pos = ghost.defaultPosition;
         Vector3 middle = new Vector3(0, 0, 1);
@@ -399,11 +403,13 @@ public class GameManager : MonoBehaviour
         float speed = baseGhostSpeed / 2;
         float speedMod = 2 / Vector3.Distance(pos, middle);
 
+        if (ghost.isBlinky)
+            step = 1;
+
         while (step == 0 && progress <= 1)
         {
             if (ghost.OscillationDone)
             {
-                //Debug.Log("Escaping...");
                 progress += speed * speedMod * Time.deltaTime;
 
                 Vector3 nextPos = Vector3.Lerp(pos, middle, progress);
@@ -442,6 +448,7 @@ public class GameManager : MonoBehaviour
             }
         }
         ghost.active = true;
+        //Debug.Log(ghost.transform.name + " escaped!!!");
     }
 
     public static float TriangleWave(float x)
@@ -450,71 +457,61 @@ public class GameManager : MonoBehaviour
         return Mathf.Abs(((2 * x - 0.5f) % 2) - 1);
     }
 
-    private int player1Lifes = 0;
-    private int player2Lifes = 0;
+    public void DisplayUI ()
+    {
+        player1Text.text = txtDefaultP1;
+        for (int i = 0; i < player1Lives; i++)
+        {
+            player1Text.text += hrt;
+        }
+
+        player2Text.text = txtDefaultP2;
+
+        if (!blinky.ai) player2Text.text += txtBlinky;
+        else if (!pinky.ai) player2Text.text += txtPinky;
+        else if (!inky.ai) player2Text.text += txtInky;
+        else if (!clyde.ai) player2Text.text += txtClyde;
+        else
+        {
+            player2Text.text = "";
+            return;
+        }
+
+        for (int i = 0; i < player2Lives; i++)
+        {
+            player2Text.text += hrt;
+        }
+    }
 
     public void AddLife(int player, int amount = 1)
     {
         if (player == 1)
         {
-            if (player1Lifes + amount <= 3)
-                player1Lifes += amount;
-
-            player1Text.text = txtDefaultP1;
-            for (int i = 0; i < player1Lifes; i++)
-            {
-                player1Text.text += hrt;
-            }
+            if (player1Lives + amount <= 3)
+                player1Lives += amount;
         }
         else if (player == 2)
         {
-            if (player2Lifes + amount <= 3)
-                player2Lifes += amount;
-
-            player2Text.text = txtDefaultP2;
-
-            if (!blinky.ai) player2Text.text += txtBlinky;
-            else if (!pinky.ai) player2Text.text += txtPinky;
-            else if (!inky.ai) player2Text.text += txtInky;
-            else if (!clyde.ai) player2Text.text += txtClyde;
-
-            for (int i = 0; i < player2Lifes; i++)
-            {
-                player2Text.text += hrt;
-            }
+            if (player2Lives + amount <= 3)
+                player2Lives += amount;
         }
+        DisplayUI();
     }
 
     public void LoseLife(int player)
     {
         if (player == 1)
         {
-            if (player1Lifes > 0)
-                player1Lifes--;
-            player1Text.text = txtDefaultP1;
-            for (int i = 0; i < player1Lifes; i++)
-            {
-                player1Text.text += hrt;
-            }
+            if (player1Lives > 0)
+                player1Lives--;
         }
         else if (player == 2)
         {
-            if (player2Lifes > 0)
-                player2Lifes--;
-            player2Text.text = txtDefaultP2;
-
-            if (!blinky.ai) player2Text.text += txtBlinky;
-            else if (!pinky.ai) player2Text.text += txtPinky;
-            else if (!inky.ai) player2Text.text += txtInky;
-            else if (!clyde.ai) player2Text.text += txtClyde;
-
-            for (int i = 0; i < player2Lifes; i++)
-            {
-                player2Text.text += hrt;
-            }
+            if (player2Lives > 0)
+                player2Lives--;
         }
+        DisplayUI();
     }
-
 }
 
 

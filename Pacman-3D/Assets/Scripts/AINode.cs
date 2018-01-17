@@ -35,6 +35,10 @@ public class AINode : MonoBehaviour
             if (state != GhostState.Dead && !pacman.Dead)
                 res.Remove(Vector3.back);
 
+        if (isSpecialNode)
+            if (state == GhostState.Dead || state == GhostState.Frightened)
+                res.Add(Vector3.forward);
+
         return res;
     }
 

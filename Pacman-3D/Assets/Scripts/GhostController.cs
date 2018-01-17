@@ -15,8 +15,10 @@ public class GhostController : MonoBehaviour
     public Vector3 defaultPosition;
 
     public bool ai = true;
+    public bool activated = false;
     public bool active = false;
     public bool debug = false;
+    public bool isEscaping = false;
 
     public bool randomMovement = false;
 
@@ -32,7 +34,7 @@ public class GhostController : MonoBehaviour
 
     private void Start()
     {
-        ResetSettings();
+        //ResetSettings();
     }
 
     public bool isBlinky = false;
@@ -43,13 +45,17 @@ public class GhostController : MonoBehaviour
         if (!isBlinky)
         {
             active = false;
-            OscillationDone = false;
-            OscillationShouldFinish = false;
         }
-        if (ai)
-            nextDirection = Vector3.right;
+        activated = false;
+        OscillationDone = false;
+        OscillationShouldFinish = false;
+
+        WakeUp();
 
         transform.position = defaultPosition;
+        transform.rotation = Quaternion.Euler(0, -90, 0);
+        direction = Vector3.zero;
+        nextDirection = Vector3.right;
 
         actionQueue.Clear();
         QueueActions();
@@ -70,6 +76,8 @@ public class GhostController : MonoBehaviour
 
     public void Init()
     {
+        //Debug.Log(transform.name + " init!");
+        activated = true;
         StartCoroutine(GameManager.Instance.Escape(this, oldCr));
     }
 
@@ -97,13 +105,13 @@ public class GhostController : MonoBehaviour
     private void ChangeState(float time, GhostState newState)
     {
         //if (debug) Debug.Log("I'll " + newState + " for " + time + "seconds.");
-        FlipDirection();
+        //FlipDirection();
         timer = time;
         state = newState;
     }
 
-    private Vector3 direction;// = Vector3.forward;
-    private Vector3 nextDirection;// = Vector3.forward;
+    public Vector3 direction;// = Vector3.forward;
+    public Vector3 nextDirection;// = Vector3.forward;
 
     private void Update()
     {
@@ -152,7 +160,9 @@ public class GhostController : MonoBehaviour
                 }
 
                 if (CanMoveForwardOrBackward(direction))
+                {
                     rb.velocity = direction * speed;
+                }
             }
         }
         else
@@ -205,6 +215,7 @@ public class GhostController : MonoBehaviour
 
             setPositionToLastNode = true;
             direction = nextDirection;
+            RotateModel();
         }
     }
 
@@ -300,31 +311,43 @@ public class GhostController : MonoBehaviour
 
     public void Die()
     {
-        if (!ai)
-            GameManager.Instance.LoseLife(2);
-
+        
         state = GhostState.Dead;
         GetComponentInChildren<BodyMesh>().Disable();
         actionQueue.Clear();
         randomMovement = false;
         StopAllCoroutines();
+        if (!ai)
+        {
+            GameManager.Instance.LoseLife(2);
+            if (LastNode != null)
+                NodeHit(LastNode);
+        }
     }
 
     public void Resurrect()
     {
         GetComponentInChildren<BodyMesh>().ResetColor();
         randomMovement = false;
-        LastNode = null;
         Init();
         QueueActions();
         GetComponentInChildren<BodyMesh>().Enable();
-        direction = nextDirection = Vector3.forward;
+        //FlipDirection();
+        //NodeHit(LastNode);
+        
+        //TODO: FIND OUT WHY IT CRASHES
+
+        //ResetSettings();
+        LastNode = null;
     }
 
     private GhostState lastState;
 
     public void SetFrightened(int seconds)
     {
+        if (!active)
+            return;
+
         lastState = state;
         state = GhostState.Frightened;
         GetComponentInChildren<BodyMesh>().SetColor(Color.blue);
