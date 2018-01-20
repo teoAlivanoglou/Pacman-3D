@@ -136,12 +136,6 @@ public class PacmanController : MonoBehaviour
             Debug.Log(s);
     }
 
-
-    public void Score(int score)
-    {
-
-    }
-
     public void ResetSettings()
     {
         transform.position = new Vector3(0, 0, -8);

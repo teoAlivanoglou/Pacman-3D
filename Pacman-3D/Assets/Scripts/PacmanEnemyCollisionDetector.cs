@@ -18,12 +18,10 @@ public class PacmanEnemyCollisionDetector : MonoBehaviour
                 if (gc.state != GhostState.Frightened)
                 {
                     GetComponentInParent<PacmanController>().Die();
-                    gc.Score();
                 }
                 else
                 {
                     gc.Die();
-                    GetComponentInParent<PacmanController>().Score(200);
                 }
             }
         }

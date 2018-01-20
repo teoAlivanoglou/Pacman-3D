@@ -1,10 +1,11 @@
 ﻿using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
+using TMPro;
 
 public class StartMenu : MonoBehaviour
 {
-    public TMPro.TextMeshProUGUI player2GhostText;
+    public TextMeshProUGUI player2GhostText;
     public GhostController[] ghosts;
 
     private List<string> ghostNames;
@@ -18,6 +19,19 @@ public class StartMenu : MonoBehaviour
             "<color=#F0A6EE>Pinky",
             "<color=#93C9F4>Inky",
             "<color=#F2C06D>Clyde"};
+
+        if (player2GhostText == null)
+            player2GhostText = GameObject.Find("Player2_Choice").GetComponent<TextMeshProUGUI>();
+        if (ghosts.Length <=0)
+        {
+            ghosts = new GhostController[]
+            {
+                GameObject.Find("Blinky").GetComponent<GhostController>(),
+                GameObject.Find("Pinky").GetComponent<GhostController>(),
+                GameObject.Find("Inky").GetComponent<GhostController>(),
+                GameObject.Find("Clyde").GetComponent<GhostController>()
+            };
+        }
     }
 
     public void CycleNext()

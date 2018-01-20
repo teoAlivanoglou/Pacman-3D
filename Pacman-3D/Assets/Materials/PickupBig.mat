@@ -6,7 +6,7 @@ Material:
   m_ObjectHideFlags: 0
   m_PrefabParentObject: {fileID: 0}
   m_PrefabInternal: {fileID: 0}
-  m_Name: Pickup
+  m_Name: PickupBig
   m_Shader: {fileID: 4800000, guid: 9c6ece3d5ef8bb84db19471daaf6c788, type: 3}
   m_ShaderKeywords: 
   m_LightmapFlags: 5
@@ -64,7 +64,7 @@ Material:
     - _MKEditorShowSketchBehavior: 0
     - _MKEditorShowSpecularBehavior: 1
     - _MKEditorShowTranslucentBehavior: 0
-    - _OutlineSize: 0.05
+    - _OutlineSize: 0.03
     - _RimIntensity: 0.28
     - _RimOffset: 0.7
     - _RimPower: 0.3
@@ -76,7 +76,7 @@ Material:
     - __dirty: 0
     m_Colors:
     - _ASEOutlineColor: {r: 0, g: 0, b: 0, a: 0}
-    - _Color: {r: 0.9632353, g: 0.78133434, b: 0.61618733, a: 1}
+    - _Color: {r: 0.88590264, g: 1, b: 0.6691177, a: 1}
     - _Color0: {r: 1, g: 1, b: 1, a: 0}
     - _Color1: {r: 0, g: 1, b: 0.8758622, a: 0}
     - _EmissionColor: {r: 0, g: 0, b: 0, a: 1}

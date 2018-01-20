@@ -64,6 +64,10 @@ ModelImporter:
     100112: Level_Col_broken_051
     100114: Portal_Right
     100116: Portal_Right_001
+    100118: Level_001
+    100120: Floor_Shaddow
+    100122: Floor_Shadow
+    100124: Portal_Left
     400000: //RootNode
     400002: Colliders
     400004: Floor
@@ -123,8 +127,13 @@ ModelImporter:
     400112: Level_Col_broken_051
     400114: Portal_Right
     400116: Portal_Right_001
+    400118: Level_001
+    400120: Floor_Shaddow
+    400122: Floor_Shadow
+    400124: Portal_Left
     2100000: Material
     2100002: unnamed
+    2100004: Material_001
     2300000: //RootNode
     2300002: Floor
     2300004: Ghost_Door
@@ -183,6 +192,10 @@ ModelImporter:
     2300110: Level_Col_broken_051
     2300112: Portal_Right
     2300114: Portal_Right_001
+    2300116: Level_001
+    2300118: Floor_Shaddow
+    2300120: Floor_Shadow
+    2300122: Portal_Left
     3300000: //RootNode
     3300002: Floor
     3300004: Ghost_Door
@@ -241,6 +254,10 @@ ModelImporter:
     3300110: Level_Col_broken_051
     3300112: Portal_Right
     3300114: Portal_Right_001
+    3300116: Level_001
+    3300118: Floor_Shaddow
+    3300120: Floor_Shadow
+    3300122: Portal_Left
     4300000: Cube
     4300002: Portal_Right_001
     4300004: Portal_Right
@@ -299,6 +316,10 @@ ModelImporter:
     4300110: Level_Col_broken_002
     4300112: Level_Col_broken_001
     4300114: Level_Col_broken
+    4300116: Level_001
+    4300118: Floor_Shaddow
+    4300120: Floor_Shadow
+    4300122: Portal_Left
     7400000: Default Take
     9500000: //RootNode
   externalObjects: {}
@@ -347,9 +368,9 @@ ModelImporter:
     preserveHierarchy: 0
     indexFormat: 0
     secondaryUVAngleDistortion: 8
-    secondaryUVAreaDistortion: 15.000001
-    secondaryUVHardAngle: 88
-    secondaryUVPackMargin: 4
+    secondaryUVAreaDistortion: 15
+    secondaryUVHardAngle: 10
+    secondaryUVPackMargin: 10
     useFileScale: 1
   tangentSpace:
     normalSmoothAngle: 60

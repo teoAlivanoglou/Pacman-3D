@@ -3,6 +3,7 @@ using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
 using TMPro;
+using UnityEngine.SceneManagement;
 
 public class GameManager : MonoBehaviour
 {
@@ -25,12 +26,13 @@ public class GameManager : MonoBehaviour
     [Header("GameplayAdjusters")]
     [Range(0, 20)]
     public int level = 1;
-    public int pacmanScore = 0;
     public int pelletsLeft;
 
     [Header("UI")]
     public TextMeshProUGUI player1Text;
     public TextMeshProUGUI player2Text;
+    public GameObject gameOverUI;
+    public TextMeshProUGUI gameOverText;
 
     private const string hrt = "<sprite=0 tint=1>";
     private const string txtDefaultP1 = "Player 1:<color=#DDD300>";
@@ -198,12 +200,14 @@ public class GameManager : MonoBehaviour
             else if (pelletsLeft < 184 && !clyde.activated)
                 clyde.Init();
 
+            if (pelletsLeft <= 0)
+                Won(1);
 
-            if (Input.GetKeyDown(KeyCode.Space))
+            if (Input.GetKeyDown(KeyCode.O))
             {
                 for (int i = 0; i < allGhosts.Length; i++)
                 {
-                    if (allGhosts[i].active && allGhosts[i].state != GhostState.Frightened && allGhosts[i].state != GhostState.Dead)
+                    if (/*allGhosts[i].active &&*/ allGhosts[i].state != GhostState.Frightened && allGhosts[i].state != GhostState.Dead)
                         allGhosts[i].SetFrightened(6);
                 }
             }
@@ -317,7 +321,7 @@ public class GameManager : MonoBehaviour
         //else
         //    inkyTarget.position = 2 * inky.transform.position - pacman.transform.position;
     }
-    
+
     private void ClydeTargetUpdate()
     {
         if (clyde.state == GhostState.Chase)
@@ -337,7 +341,10 @@ public class GameManager : MonoBehaviour
         else if (clyde.state == GhostState.Scatter)
             clydeTarget.position = clydeScatterPos;
         else if (clyde.state == GhostState.Dead)
+        {
             clydeTarget.position = clydeResetPos;
+            clyde.randomMovement = false;
+        }
         //else
         //    clydeTarget.position = 2 * clyde.transform.position - pacman.transform.position;
     }
@@ -359,7 +366,7 @@ public class GameManager : MonoBehaviour
     public IEnumerator Oscillate(GhostController ghost)
     {
         float progress = 0.5f;
-        
+
         Vector3 top = new Vector3(ghost.transform.position.x, ghost.transform.position.y, ghost.transform.position.z + 0.5f);
         Vector3 bottom = new Vector3(ghost.transform.position.x, ghost.transform.position.y, ghost.transform.position.z - 0.5f);
 
@@ -391,7 +398,7 @@ public class GameManager : MonoBehaviour
         ghost.OscillationShouldFinish = true;
         //ghost.direction = Vector3.right;
         //if (!ghost.isBlinky)
-            ghost.active = false; //isEscaping = true;
+        ghost.active = false; //isEscaping = true;
 
         Vector3 pos = ghost.defaultPosition;
         Vector3 middle = new Vector3(0, 0, 1);
@@ -404,7 +411,10 @@ public class GameManager : MonoBehaviour
         float speedMod = 2 / Vector3.Distance(pos, middle);
 
         if (ghost.isBlinky)
+        {
             step = 1;
+            ghost.OscillationDone = true;
+        }
 
         while (step == 0 && progress <= 1)
         {
@@ -457,7 +467,7 @@ public class GameManager : MonoBehaviour
         return Mathf.Abs(((2 * x - 0.5f) % 2) - 1);
     }
 
-    public void DisplayUI ()
+    public void DisplayUI()
     {
         player1Text.text = txtDefaultP1;
         for (int i = 0; i < player1Lives; i++)
@@ -502,15 +512,49 @@ public class GameManager : MonoBehaviour
     {
         if (player == 1)
         {
-            if (player1Lives > 0)
+            if (player1Lives > 1)
                 player1Lives--;
+            else
+                Won(2);
         }
         else if (player == 2)
         {
-            if (player2Lives > 0)
+            if (player2Lives > 2)
                 player2Lives--;
+            else
+                TurnOffGhost();
         }
         DisplayUI();
+    }
+
+    public void Won(int player)
+    {
+        gameOverUI.SetActive(true);
+        Time.timeScale = 0;
+        string s = "";
+
+        if (player == 1)
+            s = "Sir Pacman,\nthou";
+        else if (player == 2)
+            s = "timorous ghosts,\nye";
+
+        gameOverText.text = "Congratulations " + s + " art victorious!";
+    }
+
+    void TurnOffGhost()
+    {
+        for (int i = 0; i < allGhosts.Length; i++)
+        {
+            if (!allGhosts[i].ai)
+            {
+                allGhosts[i].gameObject.SetActive(false);
+            }
+        }
+    }
+
+    public void RestartGame()
+    {
+        SceneManager.LoadScene(SceneManager.GetActiveScene().buildIndex);
     }
 }
 

@@ -47,8 +47,6 @@ public class GhostController : MonoBehaviour
             active = false;
         }
         activated = false;
-        OscillationDone = false;
-        OscillationShouldFinish = false;
 
         WakeUp();
 
@@ -311,7 +309,7 @@ public class GhostController : MonoBehaviour
 
     public void Die()
     {
-        
+
         state = GhostState.Dead;
         GetComponentInChildren<BodyMesh>().Disable();
         actionQueue.Clear();
@@ -329,12 +327,13 @@ public class GhostController : MonoBehaviour
     {
         GetComponentInChildren<BodyMesh>().ResetColor();
         randomMovement = false;
+        active = false;
         Init();
         QueueActions();
         GetComponentInChildren<BodyMesh>().Enable();
         //FlipDirection();
         //NodeHit(LastNode);
-        
+
         //TODO: FIND OUT WHY IT CRASHES
 
         //ResetSettings();
@@ -345,13 +344,12 @@ public class GhostController : MonoBehaviour
 
     public void SetFrightened(int seconds)
     {
-        if (!active)
-            return;
+        if (active)
+            FlipDirection();
 
         lastState = state;
         state = GhostState.Frightened;
         GetComponentInChildren<BodyMesh>().SetColor(Color.blue);
-        FlipDirection();
         randomMovement = true;
         StartCoroutine(EndFrightened(seconds));
     }
@@ -365,11 +363,6 @@ public class GhostController : MonoBehaviour
             state = lastState;
             GetComponentInChildren<BodyMesh>().ResetColor();
         }
-    }
-
-    public void Score()
-    {
-
     }
 
     void Dbg(string s)
